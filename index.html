@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Model Cost Calculator</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --surface2: #252842;
+      --border: #2e3250;
+      --accent: #6c63ff;
+      --accent2: #00d4ff;
+      --text: #e8eaf6;
+      --text-dim: #9097c0;
+      --green: #00e676;
+      --yellow: #ffab00;
+      --red: #ff5252;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; min-height: 100vh; padding: 20px; }
+    .header { text-align: center; padding: 40px 20px 30px; }
+    .header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+    .header p { color: var(--text-dim); font-size: 1rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .card-title { font-size: 1rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .model-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; text-align: left; transition: all 0.2s; color: var(--text); }
+    .model-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.1); }
+    .model-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.2); box-shadow: 0 0 0 1px var(--accent); }
+    .model-btn .model-name { font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+    .model-btn .model-price { font-size: 0.7rem; color: var(--text-dim); }
+    .model-btn .model-provider { font-size: 0.65rem; color: var(--accent2); margin-bottom: 2px; }
+    .input-group { margin-bottom: 20px; }
+    .input-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; }
+    .input-label .badge { background: rgba(108,99,255,0.2); color: var(--accent); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; }
+    .input-row { display: flex; gap: 10px; align-items: center; }
+    input[type="range"] { flex: 1; -webkit-appearance: none; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 0 8px rgba(108,99,255,0.5); }
+    input[type="number"] { width: 100px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 0.85rem; text-align: right; outline: none; transition: border-color 0.2s; }
+    input[type="number"]:focus { border-color: var(--accent); }
+    .cost-display { background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(0,212,255,0.1)); border: 1px solid rgba(108,99,255,0.3); border-radius: var(--radius); padding: 24px; text-align: center; margin-bottom: 16px; }
+    .cost-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px; }
+    .cost-value { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .cost-item { background: var(--surface2); border-radius: 8px; padding: 12px; text-align: center; }
+    .cost-item .ci-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+    .cost-item .ci-value { font-size: 1.1rem; font-weight: 600; }
+    .batch-section { background: var(--surface2); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .batch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .batch-row:last-child { margin-bottom: 0; }
+    .batch-label { font-size: 0.85rem; color: var(--text-dim); width: 120px; flex-shrink: 0; }
+    .batch-input { width: 100px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 8px; font-size: 0.85rem; text-align: right; outline: none; transition: border-color 0.2s; }
+    .batch-input:focus { border-color: var(--accent); }
+    .batch-result { font-size: 0.9rem; font-weight: 600; color: var(--accent2); margin-left: auto; }
+    .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+    .compare-table thead th { background: var(--surface2); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .compare-table thead th:first-child { border-radius: 8px 0 0 8px; }
+    .compare-table thead th:last-child { border-radius: 0 8px 8px 0; }
+    .compare-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .compare-table tbody tr:hover { background: rgba(108,99,255,0.05); }
+    .compare-table tbody tr.highlighted { background: rgba(108,99,255,0.12) !important; }
+    .compare-table tbody td { padding: 11px 14px; vertical-align: middle; }
+    .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; font-weight: 700; }
+    .rank-1 { background: rgba(255,215,0,0.2); color: #ffd700; }
+    .rank-2 { background: rgba(192,192,192,0.2); color: #c0c0c0; }
+    .rank-3 { background: rgba(205,127,50,0.2); color: #cd7f32; }
+    .rank-other { background: var(--surface2); color: var(--text-dim); }
+    .provider-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; margin-right: 6px; }
+    .tag-openai { background: rgba(16,163,127,0.2); color: #10a37f; }
+    .tag-anthropic { background: rgba(210,135,66,0.2); color: #d28742; }
+    .tag-google { background: rgba(66,133,244,0.2); color: #4285f4; }
+    .tag-deepseek { background: rgba(0,188,212,0.2); color: #00bcd4; }
+    .tag-alibaba { background: rgba(255,107,0,0.2); color: #ff6b00; }
+    .tag-meta { background: rgba(66,103,178,0.2); color: #4267b2; }
+    .tag-mistral { background: rgba(255,171,0,0.2); color: #ffab00; }
+    .tag-xai { background: rgba(150,150,150,0.2); color: #aaa; }
+    .bar-wrap { position: relative; height: 4px; background: var(--border); border-radius: 2px; min-width: 60px; }
+    .bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+    .cost-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .cheapest { color: var(--green); }
+    .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-dim); border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .tab.active { background: var(--accent); color: white; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .token-hint { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; }
+    .selected-model-info { background: var(--surface2); border-radius: 8px; padding: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .smi-name { font-weight: 700; font-size: 1rem; }
+    .smi-provider { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+    .smi-prices { text-align: right; font-size: 0.78rem; color: var(--text-dim); }
+    .smi-prices span { display: block; }
+    .sort-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .sort-btn:hover { color: var(--accent); }
+    .footer { text-align: center; padding: 30px 20px; color: var(--text-dim); font-size: 0.8rem; }
+    .footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>&#9889; AI Model Cost Calculator</h1>
+  <p>Compare costs across 20+ AI models &middot; Real-time calculation &middot; 2025&ndash;2026 pricing</p>
+</div>
+
+<div class="container">
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span class="dot"></span> Select Model</div>
+        <div class="tabs">
+          <button class="tab active" onclick="filterProvider('all',this)">All</button>
+          <button class="tab" onclick="filterProvider('OpenAI',this)">OpenAI</button>
+          <button class="tab" onclick="filterProvider('Anthropic',this)">Anthropic</button>
+          <button class="tab" onclick="filterProvider('Google',this)">Google</button>
+          <button class="tab" onclick="filterProvider('other',this)">Others</button>
+        </div>
+        <div class="model-grid" id="modelGrid"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span class="dot" style="background:var(--accent2)"></span> Token Count</div>
+        <div class="input-group">
+          <div class="input-label">
+            <span>Prompt Tokens</span>
+            <span class="badge" id="promptBadge">1,000</span>
+          </div>
+          <div class="input-row">
+            <input type="range" id="promptSlider" min="0" max="1000000" step="1000" value="1000" oninput="syncSlider('prompt',this.value)">
+            <input type="number" id="promptInput" value="1000" min="0" max="10000000" oninput="syncInput('prompt',this.value)">
+          </div>
+          <div class="token-hint">&#8776; <span id="promptWords">750</span> words &middot; <span id="promptChars">4,000</span> chars</div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">
+            <span>Completion Tokens</span>
+            <span class="badge" id="completionBadge">500</span>
+          </div>
+          <div class="input-row">
+            <input type="range" id="completionSlider" min="0" max="100000" step="100" value="500" oninput="syncSlider('completion',this.value)">
+            <input type="number" id="completionInput" value="500" min="0" max="10000000" oninput="syncInput('completion',this.value)">
+          </div>
+          <div class="token-hint">&#8776; <span id="completionWords">375</span> words &middot; <span id="completionChars">2,000</span> chars</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--yellow)"></span> Batch Estimator</div>
+        <div class="batch-section">
+          <div class="batch-row">
+            <span class="batch-label">Calls per day</span>
+            <input type="number" class="batch-input" id="callsPerDay" value="100" min="1" oninput="calcBatch()">
+            <span class="batch-result" id="dailyCost">-</span>
+          </div>
+          <div class="batch-row">
+            <span class="batch-label">Monthly total</span>
+            <input type="number" class="batch-input" id="callsPerMonth" value="3000" min="1" oninput="calcBatch()">
+            <span class="batch-result" id="monthlyCost">-</span>
+          </div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-dim)">Based on selected model and token counts above</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span> Cost Breakdown</div>
+        <div class="selected-model-info">
+          <div>
+            <div class="smi-name" id="smiName">GPT-4o</div>
+            <div class="smi-provider" id="smiProvider">OpenAI</div>
+          </div>
+          <div class="smi-prices">
+            <span>Input: $<span id="smiInput">2.50</span>/1M</span>
+            <span>Output: $<span id="smiOutput">10.00</span>/1M</span>
+          </div>
+        </div>
+        <div class="cost-display">
+          <div class="cost-label">Cost per call</div>
+          <div class="cost-value" id="totalCost">$0.000000</div>
+        </div>
+        <div class="cost-grid">
+          <div class="cost-item">
+            <div class="ci-label">Input cost</div>
+            <div class="ci-value" id="inputCost">$0.000000</div>
+          </div>
+          <div class="cost-item">
+            <div class="ci-label">Output cost</div>
+            <div class="ci-value" id="outputCost">$0.000000</div>
+          </div>
+          <div class="cost-item">
+            <div class="ci-label">Daily (100 calls)</div>
+            <div class="ci-value" id="quickDaily">$0.00</div>
+          </div>
+          <div class="cost-item">
+            <div class="ci-label">Monthly (3K calls)</div>
+            <div class="ci-value" id="quickMonthly">$0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Model Comparison</div>
+        <div style="overflow-x:auto">
+          <table class="compare-table" id="compareTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Model</th>
+                <th><button class="sort-btn" id="sortInput" onclick="sortBy('input')">Input/1M</button></th>
+                <th><button class="sort-btn" id="sortOutput" onclick="sortBy('output')">Output/1M</button></th>
+                <th><button class="sort-btn" id="sortTotal" onclick="sortBy('total')">Per Call &#9660;</button></th>
+                <th>Cost Bar</th>
+              </tr>
+            </thead>
+            <tbody id="compareBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Prices sourced from official provider documentation &middot; Last updated June 2025 &middot;
+  <a href="https://openai.com/pricing" target="_blank">OpenAI</a> &middot;
+  <a href="https://anthropic.com/pricing" target="_blank">Anthropic</a> &middot;
+  <a href="https://ai.google.dev/pricing" target="_blank">Google</a>
+</div>
+
+<script>
+const MODELS = [
+  {id:'gpt-4o',         name:'GPT-4o',           provider:'OpenAI',    tag:'openai',    input:2.50,  output:10.00},
+  {id:'gpt-4o-mini',    name:'GPT-4o mini',       provider:'OpenAI',    tag:'openai',    input:0.15,  output:0.60},
+  {id:'gpt-4-turbo',    name:'GPT-4 Turbo',       provider:'OpenAI',    tag:'openai',    input:10.00, output:30.00},
+  {id:'gpt-3.5-turbo',  name:'GPT-3.5 Turbo',     provider:'OpenAI',    tag:'openai',    input:0.50,  output:1.50},
+  {id:'o3-mini',        name:'o3-mini',            provider:'OpenAI',    tag:'openai',    input:1.10,  output:4.40},
+  {id:'o1-mini',        name:'o1-mini',            provider:'OpenAI',    tag:'openai',    input:3.00,  output:12.00},
+  {id:'claude-3.7',     name:'Claude 3.7 Sonnet',  provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
+  {id:'claude-3.5-h',   name:'Claude 3.5 Haiku',   provider:'Anthropic', tag:'anthropic', input:0.80,  output:4.00},
+  {id:'claude-3-opus',  name:'Claude 3 Opus',      provider:'Anthropic', tag:'anthropic', input:15.00, output:75.00},
+  {id:'claude-3.5-s',   name:'Claude 3.5 Sonnet',  provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
+  {id:'gemini-2.5-pro', name:'Gemini 2.5 Pro',     provider:'Google',    tag:'google',    input:1.25,  output:10.00},
+  {id:'gemini-2.0-f',   name:'Gemini 2.0 Flash',   provider:'Google',    tag:'google',    input:0.10,  output:0.40},
+  {id:'gemini-1.5-pro', name:'Gemini 1.5 Pro',     provider:'Google',    tag:'google',    input:1.25,  output:5.00},
+  {id:'gemini-1.5-f',   name:'Gemini 1.5 Flash',   provider:'Google',    tag:'google',    input:0.075, output:0.30},
+  {id:'deepseek-v3',    name:'DeepSeek V3',         provider:'DeepSeek',  tag:'deepseek',  input:0.27,  output:1.10},
+  {id:'deepseek-r1',    name:'DeepSeek R1',         provider:'DeepSeek',  tag:'deepseek',  input:0.55,  output:2.19},
+  {id:'qwen-max',       name:'Qwen-Max',            provider:'Alibaba',   tag:'alibaba',   input:2.40,  output:9.60},
+  {id:'qwen-plus',      name:'Qwen-Plus',           provider:'Alibaba',   tag:'alibaba',   input:0.80,  output:2.40},
+  {id:'llama-3.3-70b',  name:'Llama 3.3 70B',       provider:'Meta',      tag:'meta',      input:0.23,  output:0.40},
+  {id:'llama-3.1-405b', name:'Llama 3.1 405B',      provider:'Meta',      tag:'meta',      input:5.00,  output:15.00},
+  {id:'mistral-large',  name:'Mistral Large',       provider:'Mistral',   tag:'mistral',   input:2.00,  output:6.00},
+  {id:'mistral-nemo',   name:'Mistral Nemo',        provider:'Mistral',   tag:'mistral',   input:0.15,  output:0.15},
+  {id:'grok-2',         name:'Grok 2',              provider:'xAI',       tag:'xai',       input:2.00,  output:10.00},
+  {id:'grok-3-mini',    name:'Grok 3 Mini',         provider:'xAI',       tag:'xai',       input:0.30,  output:0.50},
+];
+
+let selectedModelId = 'gpt-4o';
+let promptTokens = 1000;
+let completionTokens = 500;
+let currentFilter = 'all';
+let sortField = 'total';
+let sortDir = 'asc';
+
+function fmt(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return n.toLocaleString();
+}
+
+function fmtCost(c) {
+  if (c === 0) return '$0.000000';
+  if (c < 0.000001) return '$'+c.toExponential(2);
+  if (c < 0.01) return '$'+c.toFixed(6);
+  if (c < 1) return '$'+c.toFixed(4);
+  if (c < 1000) return '$'+c.toFixed(2);
+  return '$'+c.toLocaleString('en-US',{maximumFractionDigits:0});
+}
+
+function calcCost(model, pt, ct) {
+  const inp = (pt / 1e6) * model.input;
+  const out = (ct / 1e6) * model.output;
+  return { inp, out, total: inp + out };
+}
+
+function getModel(id) { return MODELS.find(m => m.id === id); }
+
+function filterProvider(p, btn) {
+  currentFilter = p;
+  document.querySelectorAll('.tabs .tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderModelGrid();
+}
+
+function getFilteredModels() {
+  if (currentFilter === 'all') return MODELS;
+  if (currentFilter === 'other') return MODELS.filter(m => !['OpenAI','Anthropic','Google'].includes(m.provider));
+  return MODELS.filter(m => m.provider === currentFilter);
+}
+
+function renderModelGrid() {
+  const grid = document.getElementById('modelGrid');
+  const filtered = getFilteredModels();
+  grid.innerHTML = filtered.map(m => `
+    <button class="model-btn ${m.id === selectedModelId ? 'active' : ''}" onclick="selectModel('${m.id}')">
+      <div class="model-provider">${m.provider}</div>
+      <div class="model-name">${m.name}</div>
+      <div class="model-price">$${m.input}/$${m.output}/1M</div>
+    </button>
+  `).join('');
+}
+
+function selectModel(id) {
+  selectedModelId = id;
+  renderModelGrid();
+  calculate();
+  renderCompare();
+}
+
+function syncSlider(type, val) {
+  val = parseInt(val) || 0;
+  if (type === 'prompt') {
+    promptTokens = val;
+    document.getElementById('promptInput').value = val;
+    document.getElementById('promptBadge').textContent = fmt(val);
+    document.getElementById('promptWords').textContent = fmt(Math.round(val*0.75));
+    document.getElementById('promptChars').textContent = fmt(val*4);
+  } else {
+    completionTokens = val;
+    document.getElementById('completionInput').value = val;
+    document.getElementById('completionBadge').textContent = fmt(val);
+    document.getElementById('completionWords').textContent = fmt(Math.round(val*0.75));
+    document.getElementById('completionChars').textContent = fmt(val*4);
+  }
+  calculate();
+  renderCompare();
+  calcBatch();
+}
+
+function syncInput(type, val) {
+  val = parseInt(val) || 0;
+  if (type === 'prompt') {
+    promptTokens = val;
+    const slider = document.getElementById('promptSlider');
+    slider.value = Math.min(val, parseInt(slider.max));
+    document.getElementById('promptBadge').textContent = fmt(val);
+    document.getElementById('promptWords').textContent = fmt(Math.round(val*0.75));
+    document.getElementById('promptChars').textContent = fmt(val*4);
+  } else {
+    completionTokens = val;
+    const slider = document.getElementById('completionSlider');
+    slider.value = Math.min(val, parseInt(slider.max));
+    document.getElementById('completionBadge').textContent = fmt(val);
+    document.getElementById('completionWords').textContent = fmt(Math.round(val*0.75));
+    document.getElementById('completionChars').textContent = fmt(val*4);
+  }
+  calculate();
+  renderCompare();
+  calcBatch();
+}
+
+function calculate() {
+  const model = getModel(selectedModelId);
+  if (!model) return;
+  const {inp, out, total} = calcCost(model, promptTokens, completionTokens);
+  document.getElementById('smiName').textContent = model.name;
+  document.getElementById('smiProvider').textContent = model.provider;
+  document.getElementById('smiInput').textContent = model.input;
+  document.getElementById('smiOutput').textContent = model.output;
+  document.getElementById('totalCost').textContent = fmtCost(total);
+  document.getElementById('inputCost').textContent = fmtCost(inp);
+  document.getElementById('outputCost').textContent = fmtCost(out);
+  document.getElementById('quickDaily').textContent = fmtCost(total * 100);
+  document.getElementById('quickMonthly').textContent = fmtCost(total * 3000);
+  calcBatch();
+}
+
+function calcBatch() {
+  const model = getModel(selectedModelId);
+  if (!model) return;
+  const {total} = calcCost(model, promptTokens, completionTokens);
+  const daily = parseInt(document.getElementById('callsPerDay').value) || 0;
+  const monthly = parseInt(document.getElementById('callsPerMonth').value) || 0;
+  document.getElementById('dailyCost').textContent = fmtCost(total * daily) + '/day';
+  document.getElementById('monthlyCost').textContent = fmtCost(total * monthly) + '/mo';
+}
+
+function sortBy(field) {
+  if (sortField === field) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir = 'asc';
+  }
+  renderCompare();
+}
+
+function renderCompare() {
+  const costs = MODELS.map(m => {
+    const {inp, out, total} = calcCost(m, promptTokens, completionTokens);
+    return { ...m, inp, out, total };
+  });
+
+  costs.sort((a, b) => {
+    let va = sortField === 'input' ? a.input : sortField === 'output' ? a.output : a.total;
+    let vb = sortField === 'input' ? b.input : sortField === 'output' ? b.output : b.total;
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  const maxCost = Math.max(...costs.map(c => c.total)) || 1;
+  const minTotal = costs[0].total;
+
+  const tbody = document.getElementById('compareBody');
+  tbody.innerHTML = costs.map((m, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+    const pct = Math.max(2, Math.round((m.total / maxCost) * 100));
+    const isSelected = m.id === selectedModelId;
+    const isCheapest = sortDir === 'asc' && sortField === 'total' && m.total === minTotal;
+    const barColor = isSelected ? 'var(--accent)' : isCheapest ? 'var(--green)' : 'var(--text-dim)';
+
+    return `<tr class="${isSelected ? 'highlighted' : ''}" onclick="selectModel('${m.id}')" style="cursor:pointer">
+      <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+      <td>
+        <span class="provider-tag tag-${m.tag}">${m.provider}</span>
+        <span style="font-weight:600">${m.name}</span>
+      </td>
+      <td class="cost-cell">$${m.input}</td>
+      <td class="cost-cell">$${m.output}</td>
+      <td class="cost-cell ${isCheapest ? 'cheapest' : ''}">${fmtCost(m.total)}</td>
+      <td style="min-width:80px">
+        <div class="bar-wrap">
+          <div class="bar-fill" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// init
+renderModelGrid();
+calculate();
+renderCompare();
+</script>
+</body>
+</html>
