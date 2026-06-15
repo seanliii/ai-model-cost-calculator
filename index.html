@@ -81,6 +81,7 @@
     .tag-meta { background: rgba(66,103,178,0.2); color: #4267b2; }
     .tag-mistral { background: rgba(255,171,0,0.2); color: #ffab00; }
     .tag-xai { background: rgba(150,150,150,0.2); color: #aaa; }
+    .tag-others { background: rgba(120,120,120,0.15); color: #888; }
     .bar-wrap { position: relative; height: 4px; background: var(--border); border-radius: 2px; min-width: 60px; }
     .bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
     .cost-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -106,7 +107,7 @@
 
 <div class="header">
   <h1>&#9889; AI Model Cost Calculator</h1>
-  <p>Compare costs across 20+ AI models &middot; Real-time calculation &middot; 2025&ndash;2026 pricing</p>
+  <p>Compare costs across 30+ AI models &middot; Real-time calculation &middot; 2026 pricing (updated Jun 2026)</p>
 </div>
 
 <div class="container">
@@ -236,30 +237,38 @@
 
 <script>
 const MODELS = [
-  {id:'gpt-4o',         name:'GPT-4o',           provider:'OpenAI',    tag:'openai',    input:2.50,  output:10.00},
-  {id:'gpt-4o-mini',    name:'GPT-4o mini',       provider:'OpenAI',    tag:'openai',    input:0.15,  output:0.60},
-  {id:'gpt-4-turbo',    name:'GPT-4 Turbo',       provider:'OpenAI',    tag:'openai',    input:10.00, output:30.00},
-  {id:'gpt-3.5-turbo',  name:'GPT-3.5 Turbo',     provider:'OpenAI',    tag:'openai',    input:0.50,  output:1.50},
-  {id:'o3-mini',        name:'o3-mini',            provider:'OpenAI',    tag:'openai',    input:1.10,  output:4.40},
-  {id:'o1-mini',        name:'o1-mini',            provider:'OpenAI',    tag:'openai',    input:3.00,  output:12.00},
-  {id:'claude-3.7',     name:'Claude 3.7 Sonnet',  provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
-  {id:'claude-3.5-h',   name:'Claude 3.5 Haiku',   provider:'Anthropic', tag:'anthropic', input:0.80,  output:4.00},
-  {id:'claude-3-opus',  name:'Claude 3 Opus',      provider:'Anthropic', tag:'anthropic', input:15.00, output:75.00},
-  {id:'claude-3.5-s',   name:'Claude 3.5 Sonnet',  provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
-  {id:'gemini-2.5-pro', name:'Gemini 2.5 Pro',     provider:'Google',    tag:'google',    input:1.25,  output:10.00},
-  {id:'gemini-2.0-f',   name:'Gemini 2.0 Flash',   provider:'Google',    tag:'google',    input:0.10,  output:0.40},
-  {id:'gemini-1.5-pro', name:'Gemini 1.5 Pro',     provider:'Google',    tag:'google',    input:1.25,  output:5.00},
-  {id:'gemini-1.5-f',   name:'Gemini 1.5 Flash',   provider:'Google',    tag:'google',    input:0.075, output:0.30},
-  {id:'deepseek-v3',    name:'DeepSeek V3',         provider:'DeepSeek',  tag:'deepseek',  input:0.27,  output:1.10},
-  {id:'deepseek-r1',    name:'DeepSeek R1',         provider:'DeepSeek',  tag:'deepseek',  input:0.55,  output:2.19},
-  {id:'qwen-max',       name:'Qwen-Max',            provider:'Alibaba',   tag:'alibaba',   input:2.40,  output:9.60},
-  {id:'qwen-plus',      name:'Qwen-Plus',           provider:'Alibaba',   tag:'alibaba',   input:0.80,  output:2.40},
-  {id:'llama-3.3-70b',  name:'Llama 3.3 70B',       provider:'Meta',      tag:'meta',      input:0.23,  output:0.40},
-  {id:'llama-3.1-405b', name:'Llama 3.1 405B',      provider:'Meta',      tag:'meta',      input:5.00,  output:15.00},
-  {id:'mistral-large',  name:'Mistral Large',       provider:'Mistral',   tag:'mistral',   input:2.00,  output:6.00},
-  {id:'mistral-nemo',   name:'Mistral Nemo',        provider:'Mistral',   tag:'mistral',   input:0.15,  output:0.15},
-  {id:'grok-2',         name:'Grok 2',              provider:'xAI',       tag:'xai',       input:2.00,  output:10.00},
-  {id:'grok-3-mini',    name:'Grok 3 Mini',         provider:'xAI',       tag:'xai',       input:0.30,  output:0.50},
+  // OpenAI — 2026 lineup
+  {id:'gpt-4.1',        name:'GPT-4.1',            provider:'OpenAI',    tag:'openai',    input:2.00,  output:8.00},
+  {id:'gpt-4.1-mini',   name:'GPT-4.1 mini',        provider:'OpenAI',    tag:'openai',    input:0.40,  output:1.60},
+  {id:'gpt-4o',         name:'GPT-4o',              provider:'OpenAI',    tag:'openai',    input:2.50,  output:10.00},
+  {id:'gpt-4o-mini',    name:'GPT-4o mini',          provider:'OpenAI',    tag:'openai',    input:0.15,  output:0.60},
+  {id:'o3',             name:'o3',                  provider:'OpenAI',    tag:'openai',    input:10.00, output:40.00},
+  {id:'o3-mini',        name:'o3-mini',              provider:'OpenAI',    tag:'openai',    input:1.10,  output:4.40},
+  {id:'o4-mini',        name:'o4-mini',              provider:'OpenAI',    tag:'openai',    input:1.10,  output:4.40},
+  {id:'gpt-4-turbo',    name:'GPT-4 Turbo',          provider:'OpenAI',    tag:'openai',    input:10.00, output:30.00},
+  // Anthropic — Claude 4 series
+  {id:'claude-4-opus',  name:'Claude 4 Opus',        provider:'Anthropic', tag:'anthropic', input:15.00, output:75.00},
+  {id:'claude-4-s',     name:'Claude Sonnet 4',      provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
+  {id:'claude-3.7',     name:'Claude 3.7 Sonnet',    provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
+  {id:'claude-3.5-h',   name:'Claude 3.5 Haiku',     provider:'Anthropic', tag:'anthropic', input:0.80,  output:4.00},
+  {id:'claude-3.5-s',   name:'Claude 3.5 Sonnet',    provider:'Anthropic', tag:'anthropic', input:3.00,  output:15.00},
+  // Google — Gemini 2.5
+  {id:'gemini-2.5-pro', name:'Gemini 2.5 Pro',       provider:'Google',    tag:'google',    input:1.25,  output:10.00},
+  {id:'gemini-2.5-f',   name:'Gemini 2.5 Flash',     provider:'Google',    tag:'google',    input:0.15,  output:0.60},
+  {id:'gemini-2.0-f',   name:'Gemini 2.0 Flash',     provider:'Google',    tag:'google',    input:0.10,  output:0.40},
+  {id:'gemini-1.5-pro', name:'Gemini 1.5 Pro',       provider:'Google',    tag:'google',    input:1.25,  output:5.00},
+  {id:'gemini-1.5-f',   name:'Gemini 1.5 Flash',     provider:'Google',    tag:'google',    input:0.075, output:0.30},
+  // Others
+  {id:'deepseek-v3',    name:'DeepSeek V3',          provider:'DeepSeek',  tag:'others',    input:0.27,  output:1.10},
+  {id:'deepseek-r1',    name:'DeepSeek R1',          provider:'DeepSeek',  tag:'others',    input:0.55,  output:2.19},
+  {id:'qwen-max',       name:'Qwen-Max',             provider:'Alibaba',   tag:'others',    input:2.40,  output:9.60},
+  {id:'qwen-plus',      name:'Qwen-Plus',            provider:'Alibaba',   tag:'others',    input:0.80,  output:2.40},
+  {id:'llama-3.3-70b',  name:'Llama 3.3 70B',        provider:'Meta',      tag:'others',    input:0.23,  output:0.40},
+  {id:'llama-3.1-405b', name:'Llama 3.1 405B',       provider:'Meta',      tag:'others',    input:5.00,  output:15.00},
+  {id:'mistral-large',  name:'Mistral Large',        provider:'Mistral',   tag:'others',    input:2.00,  output:6.00},
+  {id:'mistral-nemo',   name:'Mistral Nemo',         provider:'Mistral',   tag:'others',    input:0.15,  output:0.15},
+  {id:'grok-3',         name:'Grok 3',               provider:'xAI',       tag:'others',    input:3.00,  output:15.00},
+  {id:'grok-3-mini',    name:'Grok 3 Mini',          provider:'xAI',       tag:'others',    input:0.30,  output:0.50},
 ];
 
 let selectedModelId = 'gpt-4o';
