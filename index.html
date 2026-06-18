@@ -413,7 +413,8 @@ function sortBy(field) {
 }
 
 function renderCompare() {
-  const costs = MODELS.map(m => {
+  const models = getFilteredModels();
+  const costs = models.map(m => {
     const {inp, out, total} = calcCost(m, promptTokens, completionTokens);
     return { ...m, inp, out, total };
   });
