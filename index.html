@@ -307,6 +307,7 @@ function filterProvider(p, btn) {
   document.querySelectorAll('.tabs .tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderModelGrid();
+  renderCompare();
 }
 
 function getFilteredModels() {
